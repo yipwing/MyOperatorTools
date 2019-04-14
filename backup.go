@@ -21,10 +21,8 @@ func main() {
 		return
 	}
 	reader := bufio.NewReader(os.Stdin)
-	anwser, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("some error contact author")
-	}
+	fmt.Print("are u sure u want move these files?(y(yes)/any)")
+	anwser, _ := reader.ReadString('\n')
 	if anwser == "y" || anwser == "yes" {
 		self := os.Args[0]
 		PathSeparator := "/"
