@@ -59,6 +59,16 @@ func moveFile(ctx context.Context, source, dest, except string) error {
 		if err != nil {
 			return err
 		}
+		if _, err = os.Stat(dest); os.IsNotExist(err) {
+			err := os.MkdirAll(dest, 755)
+			if err != nil {
+				return err
+			}
+		}
+		oErr := os.Rename(filepath.Ext(path), dest)
+		if oErr != nil {
+			return err
+		}
 		fmt.Println(path, info.Size())
 		return nil
 	})
