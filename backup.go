@@ -55,21 +55,33 @@ func moveFile(ctx context.Context, source, dest, except string) error {
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
+	PathSeparator := "/"
+	if runtime.GOOS == "windows" {
+		PathSeparator = "\\"
+	}
 	err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if _, err = os.Stat(dest); os.IsNotExist(err) {
-			err := os.MkdirAll(dest, 755)
-			if err != nil {
-				return err
+			cErr := os.MkdirAll(dest, 755)
+			if cErr != nil {
+				return cErr
 			}
 		}
-		oErr := os.Rename(filepath.Ext(path), dest)
-		if oErr != nil {
-			return err
+		splitPath := strings.Split(path, PathSeparator)
+		files := splitPath[len(splitPath)-1]
+		if info.IsDir() {
+			cErr := os.MkdirAll(dest+PathSeparator+files, 755)
+			if cErr != nil {
+				return cErr
+			}
 		}
-		fmt.Println(path, info.Size())
+		oErr := os.Rename(filepath.Ext(path), dest+PathSeparator+info.Name())
+		if oErr != nil {
+			return oErr
+		}
+		fmt.Println(path, "move to", dest)
 		return nil
 	})
 	if err != nil {
