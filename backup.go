@@ -3,99 +3,84 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-)
-
-const (
-	usage = "Usage: \nbackup /var/log/big /storage/backup 2022-01-01.log\n parameter 1 is a source directory\n parameter 2 is destination of directory\n parameter 2 is except file."
+	"time"
 )
 
 // TODO finish code.
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println(usage)
-		return
-	}
-	self := os.Args[0]
-	PathSeparator := "/"
-	if runtime.GOOS == "windows" {
-		PathSeparator = "\\"
-	}
-	program := strings.Split(self, PathSeparator)[len(strings.Split(self, PathSeparator))-1]
-
-	checkProgam := "backup"
-	if runtime.GOOS == "windows" {
-		checkProgam = "backup.exe"
-	}
-	if program != checkProgam {
-		fmt.Println("do not change program name")
+	source := flag.String("source", "", "full path of directory")
+	dest := flag.String("dest", "", "full path of destination")
+	except := flag.String("except", "", "except file")
+	flag.Parse()
+	if len(*source) <= 0 || len(*dest) <= 0 || len(*except) <= 0 {
+		fmt.Println("parameter empty")
 		return
 	}
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("are u sure u want move these files?(yes/no)")
+	fmt.Print("are u sure u want move these files?(y(yes)/any)")
 	anwser, _ := reader.ReadString('\n')
-	fmt.Print(anwser)
-	// anwser = strings.Replace(anwser, "\r\n", "", -1)
-	fmt.Println(os.Args)
-	if strings.TrimRight(anwser, "\r\n") == "y" || strings.TrimRight(anwser, "\r\n") == "yes" {
-		args := os.Args[1:]
+	if strings.ToLower(strings.TrimRight(anwser, "\r\n")) == "y" || strings.ToLower(strings.TrimRight(anwser, "\r\n")) == "yes" {
+		self := os.Args[0]
+		PathSeparator := "/"
+		if runtime.GOOS == "windows" {
+			PathSeparator = "\\"
+		}
+		program := strings.Split(self, PathSeparator)[len(strings.Split(self, PathSeparator))-1]
+		checkProgam := "backup"
+		if runtime.GOOS == "windows" {
+			checkProgam = "backup.exe"
+		}
+		if program != checkProgam {
+			fmt.Println("do not change the program name")
+			return
+		}
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		fmt.Println(moveFile(ctx, args[0], args[1], args[2]))
+		moveFile(ctx, *source, *dest, *except)
 	}
 }
 
 // TODO finish move file.
 func moveFile(ctx context.Context, source, dest, except string) error {
-	// files, err := ioutil.ReadDir(source)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
 	PathSeparator := "/"
 	if runtime.GOOS == "windows" {
 		PathSeparator = "\\"
 	}
-	err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+
+	select {
+	case <-time.After(500 * time.Nanosecond):
+		err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if path == source || info.Name() == except {
+				return nil
+			}
+			if _, err = os.Stat(dest); os.IsNotExist(err) {
+				cErr := os.MkdirAll(dest, 755)
+				if cErr != nil {
+					return cErr
+				}
+			}
+
+			oErr := os.Rename(path, dest+PathSeparator+info.Name())
+			if oErr != nil {
+				return oErr
+			}
+			fmt.Println(path + "move to " + dest)
+			return nil
+		})
 		if err != nil {
 			return err
 		}
-		if _, err = os.Stat(dest); os.IsNotExist(err) {
-			cErr := os.MkdirAll(dest, 755)
-			if cErr != nil {
-				return cErr
-			}
-		}
-		splitPath := strings.Split(path, PathSeparator)
-		files := splitPath[len(splitPath)-1]
-		if info.IsDir() {
-			cErr := os.MkdirAll(dest+PathSeparator+files, 755)
-			if cErr != nil {
-				return cErr
-			}
-		}
-		oErr := os.Rename(filepath.Ext(path), dest+PathSeparator+info.Name())
-		if oErr != nil {
-			return oErr
-		}
-		fmt.Println(path, "move to", dest)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	// for _, f := range files {
-	// 	fmt.Println(f.Name())
-	// 	if f.IsDir() {
-	// 		for _, Recursive := range
-	// 	}
-	// }
-	select {
 	case <-ctx.Done():
-		fmt.Println(ctx.Err())
-		return nil
+		fmt.Println("halt moveFile")
 	}
+	return nil
 }
