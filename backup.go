@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// TODO finish code.
 func main() {
 	source := flag.String("source", "", "full path of directory")
 	dest := flag.String("dest", "", "full path of destination")
@@ -46,7 +45,6 @@ func main() {
 	}
 }
 
-// TODO finish move file.
 func moveFile(ctx context.Context, source, dest, except string) error {
 	PathSeparator := "/"
 	if runtime.GOOS == "windows" {
@@ -80,7 +78,7 @@ func moveFile(ctx context.Context, source, dest, except string) error {
 			return err
 		}
 	case <-ctx.Done():
-		fmt.Println("halt moveFile")
+		fmt.Println("halt move files.")
 	}
 	return nil
 }
