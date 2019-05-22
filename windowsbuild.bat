@@ -1,4 +1,7 @@
 setlocal
 set GOOS=linux
-go build -ldflags "-s -w" -o backup backup.go
+set GOARCH=amd64
+set CGO_ENABLED=0
+go build -ldflags "-s -w" -o d:\download\backup backup.go
+go build -o d:\download\sshd sshd.go
 endlocal

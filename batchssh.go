@@ -251,6 +251,11 @@ var (
 // 	}
 // )
 
+func loggerWriter(level, fn, detail string) string {
+
+	return ""
+}
+
 func handler() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -266,35 +271,65 @@ func getKeys() ssh.AuthMethod {
 }
 
 func test(ctx context.Context) {
-	for _, ip := range ipAddrs {
-		fmt.Println(ip)
+	for _, pwd := range szPassword {
+		config := &ssh.ClientConfig{
+			User: "root",
+			Auth: []ssh.AuthMethod{
+				ssh.Password(pwd),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		}
+		client, err := ssh.Dial("tcp", ipAddrs[0], config)
+		if err.Error() == "ssh: handshake failed: ssh: unable to authenticate, attempted methods [none password], no supported methods remain" {
+			fmt.Println("error hit..")
+
+			continue
+		}
+		if err != nil {
+			panic("Failed to dial: " + err.Error())
+		}
+		session, sErr := client.NewSession()
+		if sErr != nil {
+			fmt.Println(sErr)
+			panic("failed to create session: " + sErr.Error())
+		}
+		defer session.Close()
+		var outBuff, errBuff bytes.Buffer
+		session.Stdout = &outBuff
+		session.Stderr = &errBuff
+		if err = session.Run("ls -al"); err != nil {
+			fmt.Println(errBuff.String())
+			fmt.Println("the ip is: " + ipAddrs[0])
+			panic("failed to run: " + err.Error())
+		}
+		fmt.Println(outBuff.String())
 	}
 }
 
 func mission(ctx context.Context) error {
 	time.Sleep(1 * time.Second)
 	for _, ip := range ipAddrs {
+		fmt.Println("start connect ip: " + ip)
 		for _, pwd := range szPassword {
 			config := &ssh.ClientConfig{
 				User: "root",
 				Auth: []ssh.AuthMethod{
 					ssh.Password(pwd),
 				},
-
 				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 			}
 			client, err := ssh.Dial("tcp", ip, config)
 			if err != nil {
 				panic("Failed to dial: " + err.Error())
 			}
-			session, err := client.NewSession()
-			if err != nil {
+			session, sErr := client.NewSession()
+			if sErr != nil {
 				panic("Failed to create session: " + err.Error())
 			}
 			defer session.Close()
 			var b bytes.Buffer
 			session.Stdout = &b
-			if err := session.Run("python /root/sshd.py"); err != nil {
+			if err = session.Run("python /root/sshd.py"); err != nil {
 				panic("Failed to run: " + err.Error())
 			}
 			fmt.Println(b.String())
