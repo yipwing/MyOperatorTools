@@ -2,14 +2,11 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"fmt"
-	"net"
+	"log"
 	"os"
 	"time"
 
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 )
 
 var (
@@ -18,21 +15,7 @@ var (
 		"172.17.113.41:3722",
 		"172.17.113.44:3722",
 		"172.17.113.43:3722",
-		"172.17.103.227:3722",
-		"172.17.103.228:3722",
-		"172.17.103.229:3722",
-		"172.17.103.231:3722",
-		"172.17.103.232:3722",
-		"172.17.103.233:3722",
-		"172.17.103.234:3722",
-		"172.17.103.235:3722",
-		"172.17.101.129:3722",
-		"172.17.101.128:3722",
 		"172.17.107.44:3722",
-		"172.17.103.230:3722",
-		"172.17.103.237:3722",
-		"172.17.101.127:3722",
-		"172.17.101.126:3722",
 		"172.17.113.38:3722",
 		"172.17.113.37:3722",
 		"172.17.113.36:3722",
@@ -41,9 +24,6 @@ var (
 		"172.17.113.33:3722",
 		"172.17.113.32:3722",
 		"172.17.113.31:3722",
-		"172.17.101.125:3722",
-		"172.17.101.124:3722",
-		"172.17.101.123:3722",
 		"172.18.1.222:3722",
 		"172.17.107.43:3722",
 		"172.17.107.42:3722",
@@ -63,7 +43,6 @@ var (
 		"172.17.113.24:3722",
 		"172.17.113.22:3722",
 		"172.17.113.21:3722",
-		"172.17.103.236:3722",
 		"172.17.107.33:3722",
 		"172.17.107.32:3722",
 		"172.17.107.31:3722",
@@ -73,6 +52,26 @@ var (
 		"172.17.107.26:3722",
 		"172.17.107.25:3722",
 		"172.17.107.24:3722",
+		"172.17.105.23:3722",
+		"172.17.105.25:3722",
+		"172.17.103.227:3722",
+		"172.17.103.228:3722",
+		"172.17.103.229:3722",
+		"172.17.103.231:3722",
+		"172.17.103.232:3722",
+		"172.17.103.233:3722",
+		"172.17.103.234:3722",
+		"172.17.103.235:3722",
+		"172.17.101.129:3722",
+		"172.17.101.128:3722",
+		"172.17.103.230:3722",
+		"172.17.103.237:3722",
+		"172.17.101.127:3722",
+		"172.17.101.126:3722",
+		"172.17.101.125:3722",
+		"172.17.101.124:3722",
+		"172.17.101.123:3722",
+		"172.17.103.236:3722",
 		"172.17.103.238:3722",
 		"172.17.103.239:3722",
 		"172.17.100.117:3722",
@@ -82,8 +81,6 @@ var (
 		"172.17.100.115:3722",
 		"172.17.100.114:3722",
 		"172.17.103.240:3722",
-		"172.17.105.23:3722",
-		"172.17.105.25:3722",
 		"172.17.103.241:3722",
 		"172.17.103.242:3722",
 		"172.17.103.243:3722",
@@ -233,10 +230,7 @@ var (
 		"172.17.105.31:3722",
 		"172.17.105.32:3722",
 	}
-	szPassword = []string{
-		"fanjie",
-		"Rootadmin",
-	}
+	szPassword = "fanjie"
 )
 
 // type (
@@ -251,93 +245,96 @@ var (
 // 	}
 // )
 
-func loggerWriter(level, fn, detail string) string {
-
-	return ""
-}
-
-func handler() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	// mission(ctx)
-	test(ctx)
-}
-
-func getKeys() ssh.AuthMethod {
-	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+func createLogger() *log.Logger {
+	file, err := os.Create("./exec.logs")
+	if err != nil {
+		log.Fatalln("failed to create log file.")
 	}
-	return nil
+	return log.New(file, "", log.LstdFlags|log.Llongfile)
 }
 
-func test(ctx context.Context) {
-	for _, pwd := range szPassword {
+func loggerWriter(detail string) {
+	logger := createLogger()
+	logger.Println(detail)
+}
+
+// func handler() {
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
+// 	// mission(ctx)
+// 	test(ctx)
+// }
+
+// func getKeys() ssh.AuthMethod {
+// 	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+// 		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+// 	}
+// 	return nil
+// }
+
+// TODO test remote dir.  test different directory.
+// func test() {
+// 	config := &ssh.ClientConfig{
+// 		User: "root",
+// 		Auth: []ssh.AuthMethod{
+// 			ssh.Password(szPassword),
+// 		},
+// 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+// 	}
+// 	client, err := ssh.Dial("tcp", ipAddrs[0], config)
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 		loggerWriter("hanshake failed: unable to authenticate")
+// 	}
+// 	if err != nil {
+// 		loggerWriter("Failed to dial: " + err.Error())
+// 		return
+// 	}
+// 	session, sErr := client.NewSession()
+// 	if sErr != nil {
+// 		loggerWriter(ipAddrs[0] + " failed to create session: " + sErr.Error())
+// 	}
+// 	defer session.Close()
+// 	var outBuff, errBuff bytes.Buffer
+// 	session.Stdout = &outBuff
+// 	session.Stderr = &errBuff
+// 	if err = session.Run("ls -al /var/log"); err != nil {
+// 		loggerWriter(ipAddrs[0] + "failed to run: " + err.Error())
+// 	}
+// 	loggerWriter(outBuff.String())
+// }
+
+func mission() error {
+	time.Sleep(300 * time.Microsecond)
+	for _, ip := range ipAddrs {
 		config := &ssh.ClientConfig{
 			User: "root",
 			Auth: []ssh.AuthMethod{
-				ssh.Password(pwd),
+				ssh.Password(szPassword),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
-		client, err := ssh.Dial("tcp", ipAddrs[0], config)
-		if err.Error() == "ssh: handshake failed: ssh: unable to authenticate, attempted methods [none password], no supported methods remain" {
-			fmt.Println("error hit..")
-
-			continue
-		}
+		client, err := ssh.Dial("tcp", ip, config)
 		if err != nil {
-			panic("Failed to dial: " + err.Error())
+			loggerWriter(ip + " Failed to dial: " + err.Error())
 		}
 		session, sErr := client.NewSession()
 		if sErr != nil {
-			fmt.Println(sErr)
-			panic("failed to create session: " + sErr.Error())
+			loggerWriter(ip + " Failed to create session: " + err.Error())
 		}
 		defer session.Close()
 		var outBuff, errBuff bytes.Buffer
 		session.Stdout = &outBuff
 		session.Stderr = &errBuff
-		if err = session.Run("ls -al"); err != nil {
-			fmt.Println(errBuff.String())
-			fmt.Println("the ip is: " + ipAddrs[0])
-			panic("failed to run: " + err.Error())
+		if err = session.Run("python /root/sshd.py"); err != nil {
+			loggerWriter(ip + " Failed to run: " + err.Error())
 		}
-		fmt.Println(outBuff.String())
-	}
-}
-
-func mission(ctx context.Context) error {
-	time.Sleep(1 * time.Second)
-	for _, ip := range ipAddrs {
-		fmt.Println("start connect ip: " + ip)
-		for _, pwd := range szPassword {
-			config := &ssh.ClientConfig{
-				User: "root",
-				Auth: []ssh.AuthMethod{
-					ssh.Password(pwd),
-				},
-				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			}
-			client, err := ssh.Dial("tcp", ip, config)
-			if err != nil {
-				panic("Failed to dial: " + err.Error())
-			}
-			session, sErr := client.NewSession()
-			if sErr != nil {
-				panic("Failed to create session: " + err.Error())
-			}
-			defer session.Close()
-			var b bytes.Buffer
-			session.Stdout = &b
-			if err = session.Run("python /root/sshd.py"); err != nil {
-				panic("Failed to run: " + err.Error())
-			}
-			fmt.Println(b.String())
-		}
+		loggerWriter(outBuff.String())
 	}
 	return nil
 }
 
 func main() {
-	handler()
+	// test()
+	mission()
 }
