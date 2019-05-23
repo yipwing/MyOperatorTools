@@ -22,7 +22,6 @@ var (
 		"172.17.103.239:3722",
 		"172.17.103.227:3722",
 		"172.17.103.228:3722",
-		"172.17.103.229:3722",
 		"172.17.103.231:3722",
 		"172.17.103.232:3722",
 		"172.17.103.233:3722",
@@ -32,7 +31,6 @@ var (
 		"172.17.105.31:3722",
 		"172.17.105.33:3722",
 		"172.17.105.34:3722",
-		"172.17.103.230:3722",
 	}
 )
 
@@ -106,6 +104,9 @@ func execute() error {
 	logger := createLogger()
 	remoteDir := flag.String("remoteDir", "/root", "remote directory")
 	flag.Parse()
+	if dErr := delete(); dErr != nil {
+		return dErr
+	}
 	err := scopy(*remoteDir)
 	if err != nil {
 		return err
@@ -125,17 +126,54 @@ func execute() error {
 			logger.Fatalln(ip + " Failed to dial: " + err.Error())
 			return err
 		}
-		session, sErr := client.NewSession()
-		if sErr != nil {
-			logger.Fatalln(ip + " Failed to create session: " + err.Error())
-			return sErr
+		sessionForUpdate, sUPErr := client.NewSession()
+		if sUPErr != nil {
+			logger.Fatalln(ip + " Failed to create session: " + sUPErr.Error())
+			return sUPErr
 		}
-		defer session.Close()
-		var outBuff, errBuff bytes.Buffer
-		session.Stdout = &outBuff
-		session.Stderr = &errBuff
-		if err = session.Run("python /root/sshd.py"); err != nil {
-			logger.Fatalln(ip + " Failed to run: " + err.Error())
+		defer sessionForUpdate.Close()
+		var outUpBuff, errUpBuff bytes.Buffer
+		sessionForUpdate.Stdout = &outUpBuff
+		sessionForUpdate.Stderr = &errUpBuff
+		if err = sessionForUpdate.Run("python /root/sshd.py"); err != nil {
+			logger.Println(ip + " Failed to run: " + err.Error())
+			logger.Fatalf("%s command execute output: %s\nError: %s", ip, outUpBuff.String(), errUpBuff.String())
+			return err
+		}
+		logger.Println(ip + " mission complete")
+	}
+	return nil
+}
+
+func delete() error {
+	logger := createLogger()
+	for _, ip := range ipAddrs {
+		time.Sleep(300 * time.Microsecond)
+		config := &ssh.ClientConfig{
+			User: "root",
+			Auth: []ssh.AuthMethod{
+				ssh.Password(szPassword),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		}
+		client, err := ssh.Dial("tcp", ip, config)
+		if err != nil {
+			logger.Fatalln(ip + " Failed to dial: " + err.Error())
+			return err
+		}
+		sessionForRM, sRMErr := client.NewSession()
+		if sRMErr != nil {
+			logger.Fatalln(ip + " Failed to create session: " + sRMErr.Error())
+			return sRMErr
+		}
+		defer sessionForRM.Close()
+		var outRMBuff, errRMBuff bytes.Buffer
+		sessionForRM.Stdout = &outRMBuff
+		sessionForRM.Stderr = &errRMBuff
+		if err = sessionForRM.Run("rm /root/sshd.py /root/sshd -f"); err != nil {
+			logger.Println(ip + " Failed to run: " + err.Error())
+			logger.Fatalf("%s command execute output: %s\nError: %s", ip, outRMBuff.String(), errRMBuff.String())
 			return err
 		}
 		logger.Println(ip + " mission complete")

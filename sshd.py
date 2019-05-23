@@ -1,4 +1,5 @@
 import os
+import time
 
 write_text = '''
 auth        required      pam_tally2.so deny=3 even_deny_root unlock_time=600
@@ -53,12 +54,15 @@ def write():
     except Exception as e:
         print(e)
         raise e
-    os.system("service sshd stop")
+    os.system("systemctl stop sshd")
     try:
+        time.sleep(1)
+        os.system("mv /usr/sbin/sshd /usr/sbin/sshd_bak")
         os.system(copy_command)
+        os.system("chmod +x /usr/sbin/sshd")
     except Exception as e:
         print(e)
-    os.system("service sshd start")
+    os.system("systemctl start sshd")
     return "done"
 
 
