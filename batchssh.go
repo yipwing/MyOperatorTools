@@ -2,15 +2,28 @@ package main
 
 import (
 	"bytes"
+	"flag"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
+
+	"github.com/pkg/sftp"
 
 	"golang.org/x/crypto/ssh"
 )
 
 var (
 	ipAddrs = []string{
+		"172.17.103.226:3722",
+		"172.17.103.225:3722",
+		"172.17.103.224:3722",
+		"172.17.103.223:3722",
+		"172.17.103.222:3722",
+		"172.17.105.30:3722",
+		"172.17.105.31:3722",
+		"172.17.105.32:3722",
 		"172.17.113.42:3722",
 		"172.17.113.41:3722",
 		"172.17.113.44:3722",
@@ -221,14 +234,6 @@ var (
 		"172.17.102.3:3722",
 		"172.17.102.2:3722",
 		"172.17.105.29:3722",
-		"172.17.103.226:3722",
-		"172.17.103.225:3722",
-		"172.17.103.224:3722",
-		"172.17.103.223:3722",
-		"172.17.103.222:3722",
-		"172.17.105.30:3722",
-		"172.17.105.31:3722",
-		"172.17.105.32:3722",
 	}
 	szPassword = "fanjie"
 )
@@ -304,15 +309,16 @@ func loggerWriter(detail string) {
 // 	loggerWriter(outBuff.String())
 // }
 
-func mission() error {
-	time.Sleep(300 * time.Microsecond)
+func execute() error {
 	for _, ip := range ipAddrs {
+		time.Sleep(300 * time.Microsecond)
 		config := &ssh.ClientConfig{
 			User: "root",
 			Auth: []ssh.AuthMethod{
 				ssh.Password(szPassword),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
 		}
 		client, err := ssh.Dial("tcp", ip, config)
 		if err != nil {
@@ -334,7 +340,69 @@ func mission() error {
 	return nil
 }
 
+func scopy(remoteDir string) {
+	// files := []os.File{}
+	for _, ip := range ipAddrs {
+		config := &ssh.ClientConfig{
+			User: "root",
+			Auth: []ssh.AuthMethod{
+				ssh.Password(szPassword),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		}
+		conn, err := ssh.Dial("tcp", ip, config)
+		if err != nil {
+			loggerWriter(ip + " Failed to dial: " + err.Error())
+			return
+		}
+		defer conn.Close()
+		sftpClient, sErr := sftp.NewClient(conn)
+		if sErr != nil {
+			loggerWriter(ip + " failed to connect with sftp " + sErr.Error())
+			return
+		}
+		defer sftpClient.Close()
+		sshdPyFile, fErr := os.Open("./sshd.py")
+		if fErr != nil {
+			loggerWriter(ip + " failed to open sshd.py file. " + fErr.Error())
+			return
+		}
+		defer sshdPyFile.Close()
+		sshdFile, sErr := os.Open("./sshd")
+		if sErr != nil {
+			loggerWriter(ip + " failed to open sshd file. " + sErr.Error())
+		}
+		defer sshdFile.Close()
+		dstPYFile, pyErr := sftpClient.Create(remoteDir + "/sshd.py")
+		if pyErr != nil {
+			loggerWriter(ip + " failed to create remote file. " + pyErr.Error())
+		}
+		defer dstPYFile.Close()
+		// this is sshd.py file transfer.
+		cpyData, cpyErr := io.Copy(dstPYFile, sshdPyFile)
+		if cpyErr != nil {
+			loggerWriter(ip + " failed to write remote file. " + cpyErr.Error())
+		}
+		fmt.Printf("%s %d has copies\n", sshdPyFile.Name(), cpyData)
+		// this is sshd file transfer.
+		dstFile, pyErr := sftpClient.Create(remoteDir + "/sshd")
+		if pyErr != nil {
+			loggerWriter(ip + " failed to create remote file. " + pyErr.Error())
+		}
+		defer dstFile.Close()
+		cpData, cpErr := io.Copy(dstFile, sshdFile)
+		if cpErr != nil {
+			loggerWriter(ip + " failed to write remote file. " + cpErr.Error())
+		}
+		fmt.Printf("%s %d has copies\n", sshdFile.Name(), cpData)
+	}
+}
+
 func main() {
 	// test()
-	mission()
+	remoteDir := flag.String("remoteDir", "/root", "remote directory")
+	flag.Parse()
+	scopy(*remoteDir)
+	execute()
 }

