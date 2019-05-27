@@ -36,7 +36,7 @@ Subsystem       sftp    /usr/libexec/sftp-server
 PermitRootLogin yes
 
 ClientAliveInterval 120
-ClientAliveCountMax 720
+ClientAliveCountMax 3
 
 '''
 
