@@ -28,15 +28,12 @@ PasswordAuthentication yes
 
 UsePAM yes
 
-ClientAliveInterval 10
+ClientAliveInterval 150
 ClientAliveCountMax 2
 
 Subsystem       sftp    /usr/libexec/sftp-server
 
 PermitRootLogin yes
-
-ClientAliveInterval 120
-ClientAliveCountMax 3
 
 '''
 
@@ -66,6 +63,13 @@ def write():
     except Exception as e:
         print(e)
     os.system("systemctl start sshd")
+    try:
+        time.sleep(1)
+        os.system("echo TMOUT=300 >> /root/.bashrc")
+        os.system("echo TMOUT=300 >> /root/.zshrc")
+    except Exception as e:
+        print(e)
+        raise e
     return "done"
 
 
