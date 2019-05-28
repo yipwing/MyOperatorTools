@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -14,18 +15,18 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// for host.
 var (
-	szPassword = "fanjie"
-	ipAddrs    = []string{
-		"172.17.101.129:3722",
-		"172.17.101.128:3722",
-		"172.17.101.127:3722",
-		"172.17.101.126:3722",
-		"172.17.101.125:3722",
-		"172.17.101.124:3722",
-		"172.17.101.123:3722",
-		"172.17.101.116:3722",
-		"172.17.101.115:3722",
+	Hosts = []string{
+		"172.17.101.129:3722|fanjie",
+		"172.17.101.128:3722|fanjie",
+		"172.17.101.127:3722|fanjie",
+		"172.17.101.126:3722|fanjie",
+		"172.17.101.125:3722|fanjie",
+		"172.17.101.124:3722|fanjie",
+		"172.17.101.123:3722|fanjie",
+		"172.17.101.116:3722|fanjie",
+		"172.17.101.115:3722|fanjie",
 	}
 )
 
@@ -106,8 +107,12 @@ func execute() error {
 	if err != nil {
 		return err
 	}
-	for _, ip := range ipAddrs {
+
+	for _, items := range Hosts {
 		time.Sleep(300 * time.Microsecond)
+		item := strings.Split(items, "|")
+		ip := item[0]
+		szPassword := item[1]
 		config := &ssh.ClientConfig{
 			User: "root",
 			Auth: []ssh.AuthMethod{
@@ -142,8 +147,11 @@ func execute() error {
 
 func delete() error {
 	logger := createLogger()
-	for _, ip := range ipAddrs {
+	for _, items := range Hosts {
 		time.Sleep(300 * time.Microsecond)
+		item := strings.Split(items, "|")
+		ip := item[0]
+		szPassword := item[1]
 		config := &ssh.ClientConfig{
 			User: "root",
 			Auth: []ssh.AuthMethod{
@@ -178,8 +186,11 @@ func delete() error {
 
 func scopy(remoteDir string) error {
 	logger := createLogger()
-	for _, ip := range ipAddrs {
+	for _, items := range Hosts {
 		time.Sleep(300 * time.Microsecond)
+		item := strings.Split(items, "|")
+		ip := item[0]
+		szPassword := item[1]
 		config := &ssh.ClientConfig{
 			User: "root",
 			Auth: []ssh.AuthMethod{
