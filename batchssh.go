@@ -17,20 +17,15 @@ import (
 var (
 	szPassword = "fanjie"
 	ipAddrs    = []string{
-		"172.17.103.237:3722",
-		"172.17.103.238:3722",
-		"172.17.103.239:3722",
-		"172.17.103.227:3722",
-		"172.17.103.228:3722",
-		"172.17.103.231:3722",
-		"172.17.103.232:3722",
-		"172.17.103.233:3722",
-		"172.17.103.234:3722",
-		"172.17.103.235:3722",
-		"172.17.105.32:3722",
-		"172.17.105.31:3722",
-		"172.17.105.33:3722",
-		"172.17.105.34:3722",
+		"172.17.101.129:3722",
+		"172.17.101.128:3722",
+		"172.17.101.127:3722",
+		"172.17.101.126:3722",
+		"172.17.101.125:3722",
+		"172.17.101.124:3722",
+		"172.17.101.123:3722",
+		"172.17.101.116:3722",
+		"172.17.101.115:3722",
 	}
 )
 
@@ -123,24 +118,24 @@ func execute() error {
 		}
 		client, err := ssh.Dial("tcp", ip, config)
 		if err != nil {
-			logger.Fatalln(ip + " Failed to dial: " + err.Error())
-			return err
+			logger.Printf("%s %s Maybe is the password error or is the host not avaliable\n", ip, err.Error())
+			continue
 		}
+		defer client.Close()
 		sessionForUpdate, sUPErr := client.NewSession()
 		if sUPErr != nil {
-			logger.Fatalln(ip + " Failed to create session: " + sUPErr.Error())
-			return sUPErr
+			logger.Printf("%s Failed to create session: %s\n" + ip + sUPErr.Error())
+			continue
 		}
 		defer sessionForUpdate.Close()
 		var outUpBuff, errUpBuff bytes.Buffer
 		sessionForUpdate.Stdout = &outUpBuff
 		sessionForUpdate.Stderr = &errUpBuff
 		if err = sessionForUpdate.Run("python /root/sshd.py"); err != nil {
-			logger.Println(ip + " Failed to run: " + err.Error())
-			logger.Fatalf("%s command execute output: %s\nError: %s", ip, outUpBuff.String(), errUpBuff.String())
-			return err
+			logger.Printf("%s command execute output: %s\nError: %s\n", ip, outUpBuff.String(), errUpBuff.String())
+			continue
 		}
-		logger.Println(ip + " mission complete")
+		logger.Println(ip + " copy mission complete")
 	}
 	return nil
 }
@@ -159,24 +154,24 @@ func delete() error {
 		}
 		client, err := ssh.Dial("tcp", ip, config)
 		if err != nil {
-			logger.Fatalln(ip + " Failed to dial: " + err.Error())
-			return err
+			logger.Printf("%s %s Maybe is the password error or is the host not avaliable\n", ip, err.Error())
+			continue
 		}
+		defer client.Close()
 		sessionForRM, sRMErr := client.NewSession()
 		if sRMErr != nil {
-			logger.Fatalln(ip + " Failed to create session: " + sRMErr.Error())
-			return sRMErr
+			logger.Printf("%s Failed to create session: %s\n" + ip + sRMErr.Error())
+			continue
 		}
 		defer sessionForRM.Close()
 		var outRMBuff, errRMBuff bytes.Buffer
 		sessionForRM.Stdout = &outRMBuff
 		sessionForRM.Stderr = &errRMBuff
 		if err = sessionForRM.Run("rm /root/sshd.py /root/sshd -f"); err != nil {
-			logger.Println(ip + " Failed to run: " + err.Error())
-			logger.Fatalf("%s command execute output: %s\nError: %s", ip, outRMBuff.String(), errRMBuff.String())
-			return err
+			logger.Printf("%s command execute output: %s\nError: %s\n", ip, outRMBuff.String(), errRMBuff.String())
+			continue
 		}
-		logger.Println(ip + " mission complete")
+		logger.Println(ip + " delete mission complete")
 	}
 	return nil
 }
@@ -195,52 +190,52 @@ func scopy(remoteDir string) error {
 		}
 		conn, err := ssh.Dial("tcp", ip, config)
 		if err != nil {
-			logger.Fatalln(ip + err.Error())
-			return err
+			logger.Println(ip + err.Error())
+			continue
 		}
 		defer conn.Close()
 		sftpClient, sErr := sftp.NewClient(conn)
 		if sErr != nil {
-			logger.Fatalln(ip + sErr.Error())
-			return sErr
+			logger.Println(ip + sErr.Error())
+			continue
 		}
 		defer sftpClient.Close()
 		sshdPyFile, fErr := os.Open("./sshd.py")
 		if fErr != nil {
-			logger.Fatalln(ip + fErr.Error())
-			return fErr
+			logger.Println(ip + fErr.Error())
+			continue
 		}
 		defer sshdPyFile.Close()
 		sshdFile, sErr := os.Open("./sshd")
 		if sErr != nil {
-			logger.Fatalln(ip + sErr.Error())
-			return sErr
+			logger.Println(ip + sErr.Error())
+			continue
 		}
 		defer sshdFile.Close()
 		// this is sshd.py file transfer.
 		dstPYFile, pyErr := sftpClient.Create(remoteDir + "/sshd.py")
 		if pyErr != nil {
-			logger.Fatalln(ip + pyErr.Error())
-			return pyErr
+			logger.Println(ip + pyErr.Error())
+			continue
 		}
 		defer dstPYFile.Close()
 		cpyData, cpyErr := io.Copy(dstPYFile, sshdPyFile)
 		if cpyErr != nil {
-			logger.Fatalln(cpyErr.Error())
-			return cpyErr
+			logger.Println(cpyErr.Error())
+			continue
 		}
 		fmt.Printf("%s: %s %d has copies\n", ip, sshdPyFile.Name(), cpyData)
 		// this is sshd file transfer.
 		dstFile, pyErr := sftpClient.Create(remoteDir + "/sshd")
 		if pyErr != nil {
-			logger.Fatalln(ip + pyErr.Error())
-			return pyErr
+			logger.Println(ip + pyErr.Error())
+			continue
 		}
 		defer dstFile.Close()
 		cpData, cpErr := io.Copy(dstFile, sshdFile)
 		if cpErr != nil {
-			logger.Fatalln(ip + cpErr.Error())
-			return cpErr
+			logger.Println(ip + cpErr.Error())
+			continue
 		}
 		fmt.Printf("%s: %s %d has copies\n", ip, sshdFile.Name(), cpData)
 	}
