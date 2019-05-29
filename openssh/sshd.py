@@ -47,6 +47,7 @@ def write():
             f.write(write_text)
     except Exception as e:
         print(e)
+        raise e
     try:
         os.system("cp /etc/ssh/sshd_config /etc/ssh/sshd_config_bak")
         with open("/etc/ssh/sshd_config", "w") as f:
@@ -62,6 +63,7 @@ def write():
         os.system("chmod +x /usr/sbin/sshd")
     except Exception as e:
         print(e)
+        raise e
     os.system("systemctl start sshd")
     try:
         time.sleep(1)
