@@ -91,22 +91,20 @@ func getLogging() *log.Logger {
 
 func main() {
 	logger := getLogging()
-	config, cErr := readConfig()
-	if cErr != nil {
+	config, err := readConfig()
+	if err != nil {
 		logger.Println("config is not validate xml file.")
 	}
 
 	// TODO on linux debugging. uncommand below line.
 	// cmd := exec.Command("cp", "/etc/firewalld/zones/public.xml", "/etc/firewalld/zones/public.xml.bak")
 
-	parser = config
-
 	// file, _ := xml.MarshalIndent(parser, "", " ")
 	// file = bytes.Replace(file, []byte("<accept></accept>"), []byte("<accept/>"), -1)
 	// file = bytes.Replace(file, []byte("></port>"), []byte("/>"), -1)
 	// file = bytes.Replace(file, []byte("></source>"), []byte("/>"), -1)
 
-	buffer, _ := xml.MarshalIndent(parser, "", " ")
+	buffer, _ := xml.MarshalIndent(config, "", " ")
 	buffer = bytes.Replace(buffer, []byte("&#xA;  "), []byte(""), -1)
 	buffer = bytes.Replace(buffer, []byte("&#xA;"), []byte(""), -1)
 	buffer = bytes.Replace(buffer, []byte("&gt;"), []byte(""), -1)
