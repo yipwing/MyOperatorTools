@@ -49,52 +49,6 @@ func readFile() []ownHost {
 	return result
 }
 
-// func handler() {
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-// 	// mission(ctx)
-// 	test(ctx)
-// }
-
-// func getKeys() ssh.AuthMethod {
-// 	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-// 		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
-// 	}
-// 	return nil
-// }
-
-// TODO test remote dir.  test different directory.
-// func test() {
-// 	config := &ssh.ClientConfig{
-// 		User: "root",
-// 		Auth: []ssh.AuthMethod{
-// 			ssh.Password(szPassword),
-// 		},
-// 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-// 	}
-// 	client, err := ssh.Dial("tcp", ipAddrs[0], config)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		logger.Fatalln("hanshake failed: unable to authenticate")
-// 	}
-// 	if err != nil {
-// 		logger.Fatalln("Failed to dial: " + err.Error())
-// 		return
-// 	}
-// 	session, sErr := client.NewSession()
-// 	if sErr != nil {
-// 		logger.Fatalln(ipAddrs[0] + " failed to create session: " + sErr.Error())
-// 	}
-// 	defer session.Close()
-// 	var outBuff, errBuff bytes.Buffer
-// 	session.Stdout = &outBuff
-// 	session.Stderr = &errBuff
-// 	if err = session.Run("ls -al /var/log"); err != nil {
-// 		logger.Fatalln(ipAddrs[0] + "failed to run: " + err.Error())
-// 	}
-// 	logger.Fatalln(outBuff.String())
-// }
-
 func execute() error {
 	logger := createLogger()
 	remoteDir := flag.String("remoteDir", "/root", "remote directory")
@@ -135,7 +89,7 @@ func execute() error {
 		var outUpBuff, errUpBuff bytes.Buffer
 		sessionForUpdate.Stdout = &outUpBuff
 		sessionForUpdate.Stderr = &errUpBuff
-		if err = sessionForUpdate.Run("python /root/sshd.py"); err != nil {
+		if err = sessionForUpdate.Run("chmod +x /root/firewall && /root/firewall"); err != nil {
 			logger.Printf("%s command execute output: %s\nError: %s\n", ip, outUpBuff.String(), errUpBuff.String())
 			continue
 		}
@@ -174,7 +128,7 @@ func delete() error {
 		var outRMBuff, errRMBuff bytes.Buffer
 		sessionForRM.Stdout = &outRMBuff
 		sessionForRM.Stderr = &errRMBuff
-		if err = sessionForRM.Run("rm /root/sshd.py /root/sshd -f"); err != nil {
+		if err = sessionForRM.Run("rm firewall -f"); err != nil {
 			logger.Printf("%s command execute output: %s\nError: %s\n", ip, outRMBuff.String(), errRMBuff.String())
 			continue
 		}
@@ -210,44 +164,25 @@ func scopy(remoteDir string) error {
 			continue
 		}
 		defer sftpClient.Close()
-		sshdPyFile, fErr := os.Open("./sshd.py")
+		firewall, fErr := os.Open("./firewall")
 		if fErr != nil {
 			logger.Println(ip + fErr.Error())
 			continue
 		}
-		defer sshdPyFile.Close()
-		sshdFile, sErr := os.Open("./sshd")
-		if sErr != nil {
-			logger.Println(ip + sErr.Error())
-			continue
-		}
-		defer sshdFile.Close()
+		defer firewall.Close()
 		// this is sshd.py file transfer.
-		dstPYFile, pyErr := sftpClient.Create(remoteDir + "/sshd.py")
-		if pyErr != nil {
-			logger.Println(ip + pyErr.Error())
-			continue
-		}
-		defer dstPYFile.Close()
-		cpyData, cpyErr := io.Copy(dstPYFile, sshdPyFile)
-		if cpyErr != nil {
-			logger.Println(cpyErr.Error())
-			continue
-		}
-		fmt.Printf("%s: %s %d has copies\n", ip, sshdPyFile.Name(), cpyData)
-		// this is sshd file transfer.
-		dstFile, pyErr := sftpClient.Create(remoteDir + "/sshd")
+		dstFile, pyErr := sftpClient.Create(remoteDir + "/firewall")
 		if pyErr != nil {
 			logger.Println(ip + pyErr.Error())
 			continue
 		}
 		defer dstFile.Close()
-		cpData, cpErr := io.Copy(dstFile, sshdFile)
-		if cpErr != nil {
-			logger.Println(ip + cpErr.Error())
+		cpyData, cpyErr := io.Copy(dstFile, firewall)
+		if cpyErr != nil {
+			logger.Println(cpyErr.Error())
 			continue
 		}
-		fmt.Printf("%s: %s %d has copies\n", ip, sshdFile.Name(), cpData)
+		fmt.Printf("%s: %s %d has copies\n", ip, firewall.Name(), cpyData)
 	}
 	return nil
 }

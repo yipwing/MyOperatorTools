@@ -1,0 +1,74 @@
+<Zone>
+ <short>Public</short>
+ <description>For use in public areas. You do not trust the other computers on networks to not harm your computer. Only selected incoming connections are accepted.</description>
+ <rule family="ipv4">                    
+  <source address="172.16.15.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.100.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.101.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.102.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.103.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.104.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.105.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.106.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.107.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.110.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.112.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.17.113.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.18.1.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+ <rule family="ipv4">                    
+  <source address="172.18.2.0/24"></source>
+  <port protocol="tcp" port="22-30000"></port>
+  <accept></accept>
+ </rule>
+</Zone>
