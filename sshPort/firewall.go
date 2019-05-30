@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 )
 
 type (
@@ -71,7 +72,7 @@ type (
 func xmlReader() (*Zone, error) {
 	// file, err := os.Open("E:\\codes\\MyOperatorTools\\sshPort\\debug.xml")
 	file, err := os.Open("./sshPort/debug.xml")
-	// cmd := exec.Command("/bin/sh", "cp /etc/firewalld/zones/public.xml /etc/firewalld/zones/public.xml.bak")
+	cmd := exec.Command("cp", "/etc/firewalld/zones/public.xml", "/etc/firewalld/zones/public.xml.bak")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
