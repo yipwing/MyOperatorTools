@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -40,6 +41,20 @@ type (
 			Accept string `xml:"accept"`
 		} `xml:"rule"`
 	}
+	RuleConfig struct {
+		Text   string `xml:",chardata"`
+		Family string `xml:"family,attr"`
+		Source struct {
+			Text    string `xml:",chardata"`
+			Address string `xml:"address,attr"`
+		} `xml:"source"`
+		Port struct {
+			Text     string `xml:",chardata"`
+			Protocol string `xml:"protocol,attr"`
+			Port     string `xml:"port,attr"`
+		} `xml:"port"`
+		Accept string `xml:"accept"`
+	}
 )
 
 func xmlReader() (*Zone, error) {
@@ -65,6 +80,21 @@ func xmlReader() (*Zone, error) {
 	return fZone, nil
 }
 
+func readConfig() ([]RuleConfig, error) {
+	file, err := os.Open("./rules.xml")
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	buffer,_ := ioutil.ReadAll(file)
+	result := []RuleConfig{}
+	err = xml.Unmarshal(buffer, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result
+}
+
 func main() {
 	parser, err := xmlReader()
 	if err != nil {
@@ -81,6 +111,7 @@ func main() {
 	// TODO add rule to struct.
 	// praser.Rule = append(parser.Rule)
 	fmt.Println(parser)
+	for i:=0;i<
 	file, _ := xml.MarshalIndent(parser, "", " ")
 	file = bytes.Replace(file, []byte("&#xA;  "), []byte(""), -1)
 	file = bytes.Replace(file, []byte("&#xA;"), []byte(""), -1)
