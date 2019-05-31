@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 )
 
 type (
@@ -43,7 +44,7 @@ type (
 )
 
 func xmlReader() (*Zone, error) {
-	file, err := os.Open("./sshPort/debug.xml")
+	file, err := os.Open("/etc/firewalld/zones/public.xml")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -97,7 +98,17 @@ func main() {
 	}
 
 	// TODO on linux debugging. uncommand below line.
-	// cmd := exec.Command("cp", "/etc/firewalld/zones/public.xml", "/etc/firewalld/zones/public.xml.bak")
+	cmd := exec.Command("mv", "/etc/firewalld/zones/public.xml", "/etc/firewalld/zones/public.xml.bak")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		log.Printf("cmd.Run() err is %s\n", stderr.String())
+		log.Fatalf("cmd.Run() failed with %s\n", err)
+	}
+	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
 
 	// file, _ := xml.MarshalIndent(parser, "", " ")
 	// file = bytes.Replace(file, []byte("<accept></accept>"), []byte("<accept/>"), -1)
@@ -109,7 +120,7 @@ func main() {
 	buffer = bytes.Replace(buffer, []byte("&#xA;"), []byte(""), -1)
 	buffer = bytes.Replace(buffer, []byte("&gt;"), []byte(""), -1)
 	// TODO modify this to /etc/firewalld/zones/public.xml
-	err = ioutil.WriteFile("./sshPort/debug1.xml", buffer, 0644)
+	err = ioutil.WriteFile("/etc/firewalld/zones/public.xml", buffer, 0644)
 	if err != nil {
 		logger.Printf("write file error. %s", err.Error)
 	}
