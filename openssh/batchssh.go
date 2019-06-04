@@ -19,6 +19,7 @@ import (
 type (
 	ownHost struct {
 		Host     string `json:"host"`
+		User     string `json:"user"`
 		Password string `json:"password"`
 	}
 )
@@ -26,11 +27,11 @@ type (
 // TODO  next add json file read.
 
 func createLogger() *log.Logger {
-	file, err := os.Create("./exec.log")
+	file, err := os.OpenFile("./batch.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalln("failed to create log file.")
 	}
-	defer file.Close()
+	// defer file.Close()  // if close file handle. will not be write.
 	return log.New(file, "", log.LstdFlags|log.Llongfile)
 }
 
@@ -63,38 +64,6 @@ func readFile() []ownHost {
 // 	return nil
 // }
 
-// TODO test remote dir.  test different directory.
-// func test() {
-// 	config := &ssh.ClientConfig{
-// 		User: "root",
-// 		Auth: []ssh.AuthMethod{
-// 			ssh.Password(szPassword),
-// 		},
-// 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-// 	}
-// 	client, err := ssh.Dial("tcp", ipAddrs[0], config)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		logger.Fatalln("hanshake failed: unable to authenticate")
-// 	}
-// 	if err != nil {
-// 		logger.Fatalln("Failed to dial: " + err.Error())
-// 		return
-// 	}
-// 	session, sErr := client.NewSession()
-// 	if sErr != nil {
-// 		logger.Fatalln(ipAddrs[0] + " failed to create session: " + sErr.Error())
-// 	}
-// 	defer session.Close()
-// 	var outBuff, errBuff bytes.Buffer
-// 	session.Stdout = &outBuff
-// 	session.Stderr = &errBuff
-// 	if err = session.Run("ls -al /var/log"); err != nil {
-// 		logger.Fatalln(ipAddrs[0] + "failed to run: " + err.Error())
-// 	}
-// 	logger.Fatalln(outBuff.String())
-// }
-
 func execute() error {
 	logger := createLogger()
 	remoteDir := flag.String("remoteDir", "/root", "remote directory")
@@ -113,7 +82,7 @@ func execute() error {
 		ip := items.Host
 		szPassword := items.Password
 		config := &ssh.ClientConfig{
-			User: "root",
+			User: items.User,
 			Auth: []ssh.AuthMethod{
 				ssh.Password(szPassword),
 			},
@@ -152,7 +121,7 @@ func delete() error {
 		ip := items.Host
 		szPassword := items.Password
 		config := &ssh.ClientConfig{
-			User: "root",
+			User: items.User,
 			Auth: []ssh.AuthMethod{
 				ssh.Password(szPassword),
 			},
@@ -191,7 +160,7 @@ func scopy(remoteDir string) error {
 		ip := items.Host
 		szPassword := items.Password
 		config := &ssh.ClientConfig{
-			User: "root",
+			User: items.User,
 			Auth: []ssh.AuthMethod{
 				ssh.Password(szPassword),
 			},
